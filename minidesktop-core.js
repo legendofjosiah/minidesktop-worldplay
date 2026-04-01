@@ -1,219 +1,286 @@
 (function(){
 if(document.getElementById("miniDesktopContainer")) return;
 
-// ---- Mini Desktop Container ----
-const miniDesktopContainer=document.createElement("div");
-miniDesktopContainer.id="miniDesktopContainer";
-miniDesktopContainer.style.cssText=`
+let z=100;
+
+// ---- Desktop ----
+const desk=document.createElement("div");
+desk.id="miniDesktopContainer";
+desk.style.cssText=`
 position:fixed; bottom:20px; right:20px;
-width:400px; height:300px;
+width:450px; height:340px;
 background:linear-gradient(145deg,#6fa8dc,#3d85c6);
 border:3px solid #222; border-radius:10px;
-z-index:999999;
-box-shadow:5px 5px 20px rgba(0,0,0,0.6);
 display:flex; flex-direction:column;
-font-family:sans-serif;
+font-family:sans-serif; z-index:999999;
 `;
 
-// ---- Title Bar ----
-const titleBar=document.createElement("div");
-titleBar.style.cssText=`
-background:#222; color:white; padding:5px; cursor:move;
-display:flex; justify-content:space-between; align-items:center;
-border-top-left-radius:8px; border-top-right-radius:8px;
-`;
-titleBar.innerHTML=`<span>MiniDesktop</span>`;
-const closeBtn=document.createElement("button");
-closeBtn.innerText="X";
-closeBtn.style.cssText="background:red;color:white;border:none;padding:2px 6px;border-radius:4px;cursor:pointer;";
-closeBtn.onclick=()=>miniDesktopContainer.remove();
-titleBar.appendChild(closeBtn);
-miniDesktopContainer.appendChild(titleBar);
+const bar=document.createElement("div");
+bar.style.cssText="background:#222;color:#fff;padding:5px;cursor:move;display:flex;justify-content:space-between;";
+bar.innerHTML="MiniDesktop X MAX";
+const close=document.createElement("button");
+close.innerText="X";
+close.onclick=()=>desk.remove();
+bar.appendChild(close);
+desk.appendChild(bar);
 
-// ---- Workspace Area ----
-const workspaceArea=document.createElement("div");
-workspaceArea.style.cssText=`
-flex:1; display:flex; flex-wrap:wrap; padding:10px; gap:10px;
-background:linear-gradient(to bottom,#6fa8dc,#3d85c6);
-position:relative;
-overflow:hidden;
-`;
-miniDesktopContainer.appendChild(workspaceArea);
+const area=document.createElement("div");
+area.style.cssText="flex:1;display:flex;flex-wrap:wrap;padding:10px;gap:10px;";
+desk.appendChild(area);
 
-// ---- Taskbar ----
-const desktopTaskbar=document.createElement("div");
-desktopTaskbar.style.cssText=`
-height:30px; background:#111; color:white; display:flex; align-items:center; padding:0 5px;
-border-bottom-left-radius:8px; border-bottom-right-radius:8px;
-`;
-desktopTaskbar.innerHTML="<span style='font-size:12px;'>Start</span>";
-miniDesktopContainer.appendChild(desktopTaskbar);
+const task=document.createElement("div");
+task.style.cssText="height:30px;background:#111;color:#fff;display:flex;gap:5px;align-items:center;padding:0 5px;overflow-x:auto;";
+desk.appendChild(task);
 
-document.body.appendChild(miniDesktopContainer);
+document.body.appendChild(desk);
 
 // ---- Drag Desktop ----
-let dragging=false, offsetX=0, offsetY=0;
-titleBar.onmousedown=e=>{dragging=true; offsetX=e.clientX-miniDesktopContainer.offsetLeft; offsetY=e.clientY-miniDesktopContainer.offsetTop;}
-document.onmouseup=()=>dragging=false;
-document.onmousemove=e=>{if(dragging){miniDesktopContainer.style.left=(e.clientX-offsetX)+"px"; miniDesktopContainer.style.top=(e.clientY-offsetY)+"px";}}
+let d=false,ox,oy;
+bar.onmousedown=e=>{d=true;ox=e.clientX-desk.offsetLeft;oy=e.clientY-desk.offsetTop;}
+document.addEventListener("mouseup",()=>d=false);
+document.addEventListener("mousemove",e=>{if(d){desk.style.left=e.clientX-ox+"px";desk.style.top=e.clientY-oy+"px";}});
 
-// ---- Apps ----
-const desktopApps=[
-  {name:"NumCrunch", emoji:"🧮"},       // Calculator
-  {name:"QuickPad", emoji:"📒"},       // Notes
-  {name:"TimeKeeper", emoji:"⏱️"},    // Clock
-  {name:"SlitherDash", emoji:"🐍"},    // Snake
-  {name:"PixelBrush", emoji:"🎨"},     // Paint
-  {name:"BumperBlast", emoji:"🎱"},    // Pinball
-  {name:"WorldPlay", emoji:"🌍"}       // Physics Sandbox
-];
+function front(w){z++;w.style.zIndex=z;}
 
-function openAppWindow(title, contentHTML){
-  const win=document.createElement("div");
-  win.style.cssText=`
-    position:absolute; top:50px; left:50px; width:250px; height:180px;
-    background:#fff; border:2px solid #555; border-radius:6px;
-    display:flex; flex-direction:column; box-shadow:3px 3px 15px rgba(0,0,0,0.5);
-    z-index:10;
-  `;
-  const winTitle=document.createElement("div");
-  winTitle.style.cssText="background:#444; color:white; padding:3px; cursor:move; display:flex; justify-content:space-between; align-items:center;";
-  winTitle.innerHTML=`<span>${title}</span>`;
-  const winClose=document.createElement("button");
-  winClose.innerText="X";
-  winClose.style.cssText="background:red;color:white;border:none;padding:1px 4px;border-radius:3px;cursor:pointer;";
-  winClose.onclick=()=>win.remove();
-  winTitle.appendChild(winClose);
-  win.appendChild(winTitle);
+// ---- Window ----
+function open(title,html){
+const w=document.createElement("div");
+w.style.cssText="position:absolute;top:40px;left:40px;width:270px;height:210px;background:#fff;border:2px solid #555;display:flex;flex-direction:column;resize:both;overflow:hidden;";
+front(w);
 
-  const content=document.createElement("div");
-  content.style.cssText="flex:1;padding:3px;overflow:auto;font-size:12px;";
-  content.innerHTML=contentHTML;
-  win.appendChild(content);
+const t=document.createElement("div");
+t.style.cssText="background:#444;color:#fff;padding:3px;cursor:move;display:flex;justify-content:space-between;";
+t.innerHTML=title;
 
-  // Drag window
-  let winDrag=false, dx=0, dy=0;
-  winTitle.onmousedown=e=>{winDrag=true; dx=e.clientX-win.offsetLeft; dy=e.clientY-win.offsetTop;}
-  document.onmouseup=()=>winDrag=false;
-  document.onmousemove=e=>{if(winDrag){win.style.left=(e.clientX-dx)+"px"; win.style.top=(e.clientY-dy)+"px";}}
+const cbtn=document.createElement("button");
+cbtn.innerText="X";
+cbtn.onclick=()=>w.remove();
+t.appendChild(cbtn);
+w.appendChild(t);
 
-  miniDesktopContainer.appendChild(win);
-  return win;
+const c=document.createElement("div");
+c.style.cssText="flex:1;overflow:auto;font-size:12px;";
+c.innerHTML=html;
+w.appendChild(c);
+
+// drag window
+let wd=false,dx,dy;
+t.onmousedown=e=>{wd=true;dx=e.clientX-w.offsetLeft;dy=e.clientY-w.offsetTop;front(w);}
+document.addEventListener("mouseup",()=>wd=false);
+document.addEventListener("mousemove",e=>{if(wd){w.style.left=e.clientX-dx+"px";w.style.top=e.clientY-dy+"px";}});
+w.onclick=()=>front(w);
+
+// taskbar
+const ti=document.createElement("button");
+ti.innerText=title;
+ti.onclick=()=>front(w);
+task.appendChild(ti);
+
+desk.appendChild(w);
+return w;
 }
 
-// ---- Add App Icons ----
-desktopApps.forEach(app=>{
-  const icon=document.createElement("div");
-  icon.style.cssText="width:60px;height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:white;text-shadow:1px 1px 2px #000;font-size:12px;";
-  icon.innerHTML=`<div style="font-size:24px;">${app.emoji}</div>${app.name}`;
-  workspaceArea.appendChild(icon);
+// ---- Apps ----
+const apps=[
+["NumCrunch","🧮"],
+["QuickPad","📒"],
+["TimeKeeper","⏱️"],
+["Snake","🐍"],
+["PixelBrush","🎨"],
+["BumperBlast","🎱"],
+["WorldPlay","🌍"],
+["Sandbox","🧪"],
+["MiniTetris","⬛"],
+["YouTube","▶️"]
+];
 
-  icon.onclick=()=>{
-    // ---------- Calculator ----------
-    if(app.name==="NumCrunch"){
-      openAppWindow("NumCrunch",`
-        <input type="text" id="calcInput" style="width:90%;margin-bottom:2px;">
-        <button style="font-size:12px;" onclick="document.getElementById('calcInput').value=eval(document.getElementById('calcInput').value)">Calc</button>
-      `);
-    }
+apps.forEach(a=>{
+const ic=document.createElement("div");
+ic.style.cssText="width:60px;height:60px;text-align:center;color:white;cursor:pointer;";
+ic.innerHTML=`<div style="font-size:24px;">${a[1]}</div>${a[0]}`;
+area.appendChild(ic);
 
-    // ---------- Notes ----------
-    if(app.name==="QuickPad"){
-      openAppWindow("QuickPad",'<textarea style="width:100%;height:100%;font-size:12px;"></textarea>');
-    }
+ic.ondblclick=()=>{
 
-    // ---------- Clock ----------
-    if(app.name==="TimeKeeper"){
-      const win=openAppWindow("TimeKeeper",'<div id="clockDisplay" style="font-size:14px;"></div>');
-      setInterval(()=>{win.querySelector("#clockDisplay").innerText=new Date().toLocaleTimeString();},1000);
-    }
+// ---- Calculator ----
+if(a[0]==="NumCrunch"){
+open("Calc",`
+<input id=cI style="width:90%">
+<button onclick="try{cI.value=Function('return '+cI.value)()}catch(e){alert('error')}">=</button>
+`);
+}
 
-    // ---------- Snake ----------
-    if(app.name==="SlitherDash"){
-      const win=openAppWindow("SlitherDash",'<canvas id="slitherDashCanvas" width="200" height="150" style="background:#000;"></canvas>');
-      const canvas=win.querySelector("#slitherDashCanvas");
-      const ctx=canvas.getContext("2d");
-      let snake=[{x:10,y:10}], dx=10, dy=0, food={x:100,y:50}, gameOver=false;
-      function draw(){ctx.fillStyle="#000"; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle="#0f0"; snake.forEach(s=>ctx.fillRect(s.x,s.y,10,10)); ctx.fillStyle="#f00"; ctx.fillRect(food.x,food.y,10,10);}
-      function move(){if(gameOver) return; const head={x:snake[0].x+dx,y:snake[0].y+dy}; if(head.x<0||head.x>=canvas.width||head.y<0||head.y>=canvas.height||snake.some(s=>s.x===head.x&&s.y===head.y)){gameOver=true;return;} snake.unshift(head); if(head.x===food.x&&head.y===food.y){food={x:Math.floor(Math.random()*20)*10,y:Math.floor(Math.random()*15)*10};} else {snake.pop();}}
-      document.addEventListener("keydown",e=>{if(e.key==="ArrowUp"&&dy===0){dx=0;dy=-10;}if(e.key==="ArrowDown"&&dy===0){dx=0;dy=10;}if(e.key==="ArrowLeft"&&dx===0){dx=-10;dy=0;}if(e.key==="ArrowRight"&&dx===0){dx=10;dy=0;}});
-      setInterval(()=>{move(); draw();},150);
-    }
+// ---- Notes ----
+if(a[0]==="QuickPad"){
+open("QuickPad",'<textarea style="width:100%;height:100%;"></textarea>');
+}
 
-    // ---------- Paint ----------
-    if(app.name==="PixelBrush"){
-      const win=openAppWindow("PixelBrush",'<canvas id="pixelBrushCanvas" width="200" height="150" style="background:#fff;border:1px solid #000;"></canvas>');
-      const canvas=win.querySelector("#pixelBrushCanvas");
-      const ctx=canvas.getContext("2d");
-      let drawing=false;
-      canvas.onmousedown=e=>{drawing=true; ctx.beginPath(); ctx.moveTo(e.offsetX,e.offsetY);}
-      canvas.onmouseup=()=>drawing=false;
-      canvas.onmousemove=e=>{if(drawing){ctx.lineTo(e.offsetX,e.offsetY); ctx.stroke();}}
-    }
+// ---- Clock ----
+if(a[0]==="TimeKeeper"){
+const w=open("Clock",'<div id=clock></div>');
+setInterval(()=>{w.querySelector("#clock").innerText=new Date().toLocaleTimeString();},1000);
+}
 
-    // ---------- Pinball ----------
-    if(app.name==="BumperBlast"){
-      const win=openAppWindow("BumperBlast",'<canvas id="bumperBlastCanvas" width="200" height="150" style="background:#222;"></canvas>');
-      const canvas=win.querySelector("#bumperBlastCanvas");
-      const ctx=canvas.getContext("2d");
-      let ball={x:100,y:75,dx:2,dy:2,r:5};
-      function draw(){ctx.fillStyle="#222"; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle="#ff0"; ctx.beginPath(); ctx.arc(ball.x,ball.y,ball.r,0,2*Math.PI); ctx.fill();}
-      function move(){ball.x+=ball.dx; ball.y+=ball.dy; if(ball.x<0||ball.x>canvas.width) ball.dx*=-1; if(ball.y<0||ball.y>canvas.height) ball.dy*=-1;}
-      setInterval(()=>{move(); draw();},20);
-    }
+// ---- Snake ----
+if(a[0]==="Snake"){
+const w=open("Snake","<canvas width=200 height=150></canvas>");
+const ctx=w.querySelector("canvas").getContext("2d");
+let x=100,y=75,dx=10,dy=0;
 
-    // ---------- WorldPlay (Physics Sandbox) ----------
-    if(app.name==="WorldPlay"){
-      const win=openAppWindow("WorldPlay",`
-        <canvas id="worldPlayCanvas" width="350" height="220" style="background:#88ccee;border:1px solid #000;"></canvas>
-        <div style="margin-top:5px;">
-          <button id="addBall">Add Ball</button>
-          <button id="addBox">Add Box</button>
-          <button id="addNPC">Add NPC</button>
-          <button id="clearAll">Clear</button>
-        </div>
-      `);
+document.onkeydown=e=>{
+if(e.key==="ArrowUp"){dx=0;dy=-10;}
+if(e.key==="ArrowDown"){dx=0;dy=10;}
+if(e.key==="ArrowLeft"){dx=-10;dy=0;}
+if(e.key==="ArrowRight"){dx=10;dy=0;}
+};
 
-      const canvas = win.querySelector("#worldPlayCanvas");
-      const ctx = canvas.getContext("2d");
-      const gravity = 0.5;
-      const friction = 0.8;
-      let objects = [];
-      let npcs = [];
+setInterval(()=>{
+x+=dx;y+=dy;
+ctx.fillStyle="black";ctx.fillRect(0,0,200,150);
+ctx.fillStyle="lime";ctx.fillRect(x,y,10,10);
+},100);
+}
 
-      class PhysObject{constructor(x,y,dx,dy,type){this.x=x;this.y=y;this.dx=dx;this.dy=dy;this.type=type;this.size=Math.random()*15+10;this.color="#"+Math.floor(Math.random()*16777215).toString(16);}
-        update(){this.dy+=gravity;this.x+=this.dx;this.y+=this.dy;if(this.y+this.size>canvas.height){this.y=canvas.height-this.size;this.dy*=-friction;}if(this.x-this.size<0){this.x=this.size;this.dx*=-friction;}if(this.x+this.size>canvas.width){this.x=canvas.width-this.size;this.dx*=-friction;}}
-        draw(){ctx.fillStyle=this.color;if(this.type==="ball"){ctx.beginPath();ctx.arc(this.x,this.y,this.size,0,Math.PI*2);ctx.fill();}else{ctx.fillRect(this.x-this.size/2,this.y-this.size/2,this.size,this.size);}}
-      }
+// ---- Paint ----
+if(a[0]==="PixelBrush"){
+const w=open("Paint","<canvas width=200 height=150 style='background:#fff'></canvas>");
+const c=w.querySelector("canvas");
+const ctx=c.getContext("2d");
+let draw=false;
+c.onmousedown=e=>{draw=true;ctx.beginPath();ctx.moveTo(e.offsetX,e.offsetY);}
+c.onmouseup=()=>draw=false;
+c.onmousemove=e=>{if(draw){ctx.lineTo(e.offsetX,e.offsetY);ctx.stroke();}};
+}
 
-      class NPC{constructor(x,y){this.x=x;this.y=y;this.width=15;this.height=30;this.color="#ffcc00";this.dx=1.5;}
-        update(){this.x+=this.dx;if(this.x<0||this.x+this.width>canvas.width) this.dx*=-1;objects.forEach(o=>{const dx=o.x-(this.x+this.width/2);const dy=o.y-(this.y+this.height/2);const dist=Math.sqrt(dx*dx+dy*dy);if(dist<25){o.dx+=this.dx*0.1;o.dy-=1;}});}
-        draw(){ctx.fillStyle=this.color;ctx.fillRect(this.x,this.y,this.width,this.height);}
-      }
+// ---- Pinball ----
+if(a[0]==="BumperBlast"){
+const w=open("Pinball","<canvas width=200 height=150></canvas>");
+const c=w.querySelector("canvas");
+const ctx=c.getContext("2d");
+let ball={x:100,y:75,dx:3,dy:3};
 
-      npcs.push(new NPC(50, canvas.height-35));
-      function animate(){ctx.clearRect(0,0,canvas.width,canvas.height);objects.forEach(o=>{o.update();o.draw();});npcs.forEach(n=>{n.update();n.draw();});requestAnimationFrame(animate);}
-      animate();
+setInterval(()=>{
+ctx.fillStyle="#222";ctx.fillRect(0,0,200,150);
+ctx.fillStyle="yellow";
+ctx.beginPath();ctx.arc(ball.x,ball.y,6,0,6.28);ctx.fill();
+ball.x+=ball.dx;ball.y+=ball.dy;
+if(ball.x<0||ball.x>200) ball.dx*=-1;
+if(ball.y<0||ball.y>150) ball.dy*=-1;
+},20);
+}
 
-      win.querySelector("#addBall").onclick=()=>{objects.push(new PhysObject(Math.random()*canvas.width,20,Math.random()*4-2,0,"ball"));}
-      win.querySelector("#addBox").onclick=()=>{objects.push(new PhysObject(Math.random()*canvas.width,20,Math.random()*4-2,0,"box"));}
-      win.querySelector("#addNPC").onclick=()=>{npcs.push(new NPC(Math.random()*canvas.width,canvas.height-35));}
-      win.querySelector("#clearAll").onclick=()=>{objects=[];npcs=[];}
+// ---- WORLDPLAY (ADVANCED SANDBOX) ----
+if(a[0]==="WorldPlay"){
+const w=open("WorldPlay","<canvas width=260 height=180></canvas>");
+const canvas=w.querySelector("canvas");
+const ctx=canvas.getContext("2d");
 
-      // --- Pick & Drag ---
-      let selected=null, offsetX=0, offsetY=0;
-      canvas.onmousedown=e=>{
-        const rect=canvas.getBoundingClientRect();
-        const mx=e.clientX-rect.left,my=e.clientY-rect.top;
-        selected=[...objects,...npcs].find(o=>{
-          if(o instanceof PhysObject){ if(o.type==="ball"){const dx=mx-o.x,dy=my-o.y;return dx*dx+dy*dy<=o.size*o.size;}else{return mx>=o.x-o.size/2&&mx<=o.x+o.size/2&&my>=o.y-o.size/2&&my<=o.y+o.size/2;}}
-          else if(o instanceof NPC){return mx>=o.x&&mx<=o.x+o.width&&my>=o.y&&my<=o.y+o.height;}
-        });
-        if(selected){offsetX=mx-selected.x;offsetY=my-selected.y;if(selected instanceof PhysObject){selected.dx=0;selected.dy=0;}if(selected instanceof NPC){selected.dx=0;}}
-      }
-      canvas.onmousemove=e=>{if(selected){const rect=canvas.getBoundingClientRect();selected.x=e.clientX-rect.left-offsetX;selected.y=e.clientY-rect.top-offsetY;}}
-      canvas.onmouseup=()=>{selected=null;}
-    }
-  };
+let objs=[];
+let grab=null;
+
+canvas.onclick=()=>objs.push({x:100,y:20,vx:Math.random()*4-2,vy:0});
+
+canvas.onmousedown=e=>{
+const r=canvas.getBoundingClientRect();
+const mx=e.clientX-r.left,my=e.clientY-r.top;
+objs.forEach(o=>{
+if(Math.hypot(o.x-mx,o.y-my)<10) grab=o;
 });
+};
+canvas.onmouseup=()=>grab=null;
+canvas.onmousemove=e=>{
+if(grab){
+const r=canvas.getBoundingClientRect();
+grab.x=e.clientX-r.left;
+grab.y=e.clientY-r.top;
+grab.vx=0;grab.vy=0;
+}
+};
+
+function loop(){
+ctx.fillStyle="#88ccee";ctx.fillRect(0,0,260,180);
+objs.forEach(o=>{
+if(grab!==o){
+o.vy+=0.4;
+o.x+=o.vx;o.y+=o.vy;
+if(o.y>170){o.y=170;o.vy*=-0.6;}
+}
+ctx.fillStyle="red";
+ctx.beginPath();ctx.arc(o.x,o.y,8,0,6.28);ctx.fill();
+});
+requestAnimationFrame(loop);
+}
+loop();
+}
+
+// ---- EXTRA SANDBOX ----
+if(a[0]==="Sandbox"){
+const w=open("Sandbox","<canvas width=220 height=150></canvas>");
+const canvas=w.querySelector("canvas");
+const ctx=canvas.getContext("2d");
+
+let o={x:100,y:50,vx:0,vy:0},grab=false;
+
+canvas.onmousedown=()=>grab=true;
+canvas.onmouseup=()=>grab=false;
+canvas.onmousemove=e=>{
+if(grab){
+const r=canvas.getBoundingClientRect();
+o.x=e.clientX-r.left;
+o.y=e.clientY-r.top;
+o.vx=0;o.vy=0;
+}
+};
+
+function loop(){
+ctx.fillStyle="black";ctx.fillRect(0,0,220,150);
+if(!grab){
+o.vy+=0.3;
+o.x+=o.vx;o.y+=o.vy;
+if(o.y>140){o.y=140;o.vy*=-0.6;}
+}
+ctx.fillStyle="orange";
+ctx.beginPath();ctx.arc(o.x,o.y,8,0,6.28);ctx.fill();
+requestAnimationFrame(loop);
+}
+loop();
+}
+
+// ---- TETRIS ----
+if(a[0]==="MiniTetris"){
+const w=open("Tetris","<canvas width=120 height=180></canvas>");
+const ctx=w.querySelector("canvas").getContext("2d");
+let y=0;
+setInterval(()=>{
+ctx.fillStyle="black";ctx.fillRect(0,0,120,180);
+ctx.fillStyle="cyan";ctx.fillRect(50,y,20,20);
+y+=5;if(y>180)y=0;
+},100);
+}
+
+// ---- YOUTUBE ----
+if(a[0]==="YouTube"){
+const w=open("YouTube",`
+<input id=url placeholder="URL" style="width:90%">
+<input id=id placeholder="Video ID" style="width:90%">
+<button id=go>Load</button>
+<div id=p></div>
+`);
+const load=()=>{
+let id=w.querySelector("#id").value;
+const url=w.querySelector("#url").value;
+if(!id&&url){
+const m=url.match(/(?:v=|\\/|shorts\\/)([\\w-]{11})/);
+if(m) id=m[1];
+}
+if(!id) return alert("invalid");
+w.querySelector("#p").innerHTML=
+\`<iframe width=220 height=130 src="https://www.youtube.com/embed/\${id}?autoplay=1"></iframe>\`;
+};
+w.querySelector("#go").onclick=load;
+}
+
+};
+});
+
 })();
